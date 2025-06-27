@@ -157,8 +157,11 @@ const useGCSUploadFile = (): IProps => {
 							);
 							attempt++;
 
-							if (attempt >= maxRetries) {
+					if (attempt >= maxRetries) {
 								uploadFailed = true;
+								if (chunkError instanceof Error) {
+									throw chunkError;
+								}
 								throw new Error(
 									'Max retries reached for chunk upload.'
 								);
