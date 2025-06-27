@@ -8,11 +8,13 @@ import {useNavigate} from 'react-router-dom';
 
 import useGCSGetUploadOffset from './useGCSGetUploadOffset';
 import useTicketAttachmentsCompleteUpload from './useTicketAttachmentsCompleteUpload';
+import {isMd5HashEqual} from '../pages/AttachmentUploader/AttachmentUploader';
 
 interface IParams {
 	accountKey: string;
 	comment: string;
 	file: File;
+	localMd5: string;
 	sessionURL: string;
 	ticketAttachmentId: string;
 	ticketId: string;
@@ -22,7 +24,7 @@ interface IProps {
 	abortUpload: () => void;
 	loading: boolean;
 	progress: number;
-	uploadFile: (params: IParams) => Promise<boolean>;
+	uploadFile: (params: IParams, hasRetried?: boolean) => Promise<boolean>;
 }
 
 const useGCSUploadFile = (): IProps => {
@@ -45,11 +47,12 @@ const useGCSUploadFile = (): IProps => {
 	} = useTicketAttachmentsCompleteUpload();
 
 	const uploadFile = useCallback(
-		async (params: IParams) => {
+		async (params: IParams, hasRetried = false) => {
 			const {
 				accountKey,
 				comment,
 				file,
+				localMd5,
 				sessionURL,
 				ticketAttachmentId,
 				ticketId,
@@ -59,6 +62,7 @@ const useGCSUploadFile = (): IProps => {
 			setProgress(0);
 
 			let uploadFailed = false;
+			let gcpMd5Hash;
 			const maxRetries = 5;
 			const retryDelay = (attempt: number) => 500 * Math.pow(2, attempt);
 			const controller = new AbortController();
@@ -123,6 +127,9 @@ const useGCSUploadFile = (): IProps => {
 								signal: controller.signal,
 							});
 
+							const data = await response.json();
+							gcpMd5Hash = data.md5Hash;
+
 							if (response.ok || response.status === 308) {
 								successInChunkUpload = true;
 								chunkStart = chunkEnd;
@@ -141,7 +148,6 @@ const useGCSUploadFile = (): IProps => {
 						catch (chunkError) {
 							if (controller.signal.aborted) {
 								uploadFailed = true;
-
 								break;
 							}
 
@@ -153,9 +159,6 @@ const useGCSUploadFile = (): IProps => {
 
 							if (attempt >= maxRetries) {
 								uploadFailed = true;
-								if (chunkError instanceof Error) {
-									throw chunkError;
-								}
 								throw new Error(
 									'Max retries reached for chunk upload.'
 								);
@@ -187,6 +190,15 @@ const useGCSUploadFile = (): IProps => {
 
 				if (completeUploadError) {
 					throw completeUploadError;
+				}
+
+				if (!isMd5HashEqual(localMd5, gcpMd5Hash)) {
+					if (!hasRetried) {
+						return await uploadFile(params, true);
+					} else {
+						navigate(`/${ticketId}/unexpected-error`);
+						return false;
+					}
 				}
 
 				if (!gcsGetUploadOffsetLoading && !completeUploadLoading) {

@@ -103,6 +103,7 @@ const AttachmentUploader = () => {
 			accountKey: initiationResult.accountKey,
 			comment,
 			file,
+			localMd5: calculatedMd5,
 			sessionURL: initiationResult.gcsSessionURL,
 			ticketAttachmentId: initiationResult.ticketAttachmentId,
 			ticketId: ticketId as string,
