@@ -6,9 +6,9 @@
 import {useCallback, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 
+import {isMd5HashEqual} from '../pages/AttachmentUploader/AttachmentUploader';
 import useGCSGetUploadOffset from './useGCSGetUploadOffset';
 import useTicketAttachmentsCompleteUpload from './useTicketAttachmentsCompleteUpload';
-import {isMd5HashEqual} from '../pages/AttachmentUploader/AttachmentUploader';
 
 interface IParams {
 	accountKey: string;
@@ -157,7 +157,7 @@ const useGCSUploadFile = (): IProps => {
 							);
 							attempt++;
 
-					if (attempt >= maxRetries) {
+							if (attempt >= maxRetries) {
 								uploadFailed = true;
 								if (chunkError instanceof Error) {
 									throw chunkError;
@@ -198,8 +198,10 @@ const useGCSUploadFile = (): IProps => {
 				if (!isMd5HashEqual(localMd5, gcpMd5Hash)) {
 					if (!hasRetried) {
 						return await uploadFile(params, true);
-					} else {
+					}
+					else {
 						navigate(`/${ticketId}/unexpected-error`);
+
 						return false;
 					}
 				}
