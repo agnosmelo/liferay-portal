@@ -20,14 +20,6 @@ import useGenerateFileMd5 from '../../hooks/useGenerateFileMd5';
 import useTicketAttachmentsDelete from '../../hooks/useTicketAttachmentsDelete';
 import useTicketAttachmentsInitiateUpload from '../../hooks/useTicketAttachmentsInitiateUpload';
 
-export function isMd5HashEqual(localMd5: string, gcpMd5Hash: string): boolean {
-	const localBase24Md5 = new Uint8Array(
-		localMd5.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
-	);
-
-	return btoa(String.fromCharCode(...localBase24Md5)) === gcpMd5Hash;
-}
-
 const AttachmentUploader = () => {
 	const [comment, setComment] = useState<string>('');
 	const [file, setFile] = useState<File>();
@@ -103,7 +95,6 @@ const AttachmentUploader = () => {
 			accountKey: initiationResult.accountKey,
 			comment,
 			file,
-			localMd5: calculatedMd5,
 			sessionURL: initiationResult.gcsSessionURL,
 			ticketAttachmentId: initiationResult.ticketAttachmentId,
 			ticketId: ticketId as string,
