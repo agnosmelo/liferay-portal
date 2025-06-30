@@ -22,6 +22,7 @@ interface IProps {
 	abortUpload: () => void;
 	loading: boolean;
 	progress: number;
+	uploadFile: (params: IParams) => Promise<boolean>;
 }
 
 const useGCSUploadFile = (): IProps => {
@@ -44,7 +45,7 @@ const useGCSUploadFile = (): IProps => {
 	} = useTicketAttachmentsCompleteUpload();
 
 	const uploadFile = useCallback(
-		async (params: IParams) => {
+		async (params: IParams, hasRetried = false) => {
 			const {
 				accountKey,
 				comment,
@@ -186,6 +187,7 @@ const useGCSUploadFile = (): IProps => {
 				if (completeUploadError) {
 					throw completeUploadError;
 				}
+
 
 				if (!gcsGetUploadOffsetLoading && !completeUploadLoading) {
 					navigate(`/${ticketId}/upload-confirmation`, {
