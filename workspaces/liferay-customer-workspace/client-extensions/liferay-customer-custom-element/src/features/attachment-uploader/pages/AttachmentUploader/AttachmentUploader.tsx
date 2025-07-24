@@ -19,6 +19,7 @@ import useGCSUploadFile from '../../hooks/useGCSUploadFile';
 import useGenerateFileMd5 from '../../hooks/useGenerateFileMd5';
 import useTicketAttachmentsDelete from '../../hooks/useTicketAttachmentsDelete';
 import useTicketAttachmentsInitiateUpload from '../../hooks/useTicketAttachmentsInitiateUpload';
+import useCheckUploadAccess from '../../hooks/useCheckUploadAccess';
 
 const AttachmentUploader = () => {
 	const [comment, setComment] = useState<string>('');
@@ -53,6 +54,14 @@ const AttachmentUploader = () => {
 		gcsUploadFileLoading ||
 		generateMd5Loading ||
 		ticketAttachmentInitiateUploadLoading;
+
+
+	const {loading: accessCheckLoading} = useCheckUploadAccess();
+	
+	if (accessCheckLoading) {
+		return
+	}
+
 
 	const _handleCloseOnClick = () => {
 		if (window.history.length > 1) {
